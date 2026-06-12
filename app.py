@@ -2,36 +2,36 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-# પેજ સેટઅપ
+# Page Setup
 st.set_page_config(page_title="Ice Cream Digital Challan", layout="wide")
 
-st.title("🍦 આઈસ્ક્રીમ ડિજિટલ ચલણ બુક")
+st.title("🍦 Ice Cream Digital Challan Book")
 st.write("---")
 
-# સેઝન સ્ટેટમાં ચલણ નંબર મેન્ટેન કરવા માટે
+# Maintain Challan Number in Session State
 if "challan_number" not in st.session_state:
-    st.session_state.challan_number = 403  # તમારા ફોટા મુજબનો સ્ટાર્ટિંગ નંબર
+    st.session_state.challan_number = 403  # Starting number from your photo
 
-# ઉપરનો ભાગ: ચલણ નંબર અને તારીખ
+# Top Section: Challan No & Date
 col_top1, col_top2 = st.columns(2)
 with col_top1:
     st.subheader(f"📄 Delivery Challan No: {st.session_state.challan_number}")
 with col_top2:
-    challan_date = st.date_input("DATE (તારીખ):", date.today())
+    challan_date = st.date_input("DATE:", date.today())
 
-# ગ્રાહક અને લોકેશનની વિગત
-st.write("### 👤 ગ્રાહકની વિગત")
+# Customer Details
+st.write("### 👤 Customer Details")
 col_cust1, col_cust2 = st.columns(2)
 with col_cust1:
-    customer_name = st.text_input("ગ્રાહક / દુકાનનું નામ:")
+    customer_name = st.text_input("Customer / Shop Name:")
 with col_cust2:
-    delivery_place = st.text_input("જગ્યાનું નામ / એડ્રેસ (જેમ કે: ન્યુવીઆઈપી પુરા):")
+    delivery_place = st.text_input("Delivery Place / Address (e.g., New VIP Pura):")
 
 st.write("---")
-st.write("### 🍧 આઈસ્ક્રીમ અને ક્વોન્ટિટી લિસ્ટ")
-st.info("💡 જે આઈસ્ક્રીમનો ઓર્ડર હોય તેની જ ક્વોન્ટિટી અને ભાવ લખો. બાકીનામાં 0 રહેવા દો.")
+st.write("### 🍧 Ice Cream & Quantity List")
+st.info("💡 Enter Quantity and Price only for the items ordered. Leave others as 0.")
 
-# તમારા ફોટા (image_a1d9ff.jpg) મુજબની બધી જ આઈટમ્સનું લિસ્ટ
+# All 34 items from your photo
 ice_cream_items = [
     "Vanila", "American Dryfruit", "Chocolate Chips", "Rajbhog", "Kesar Pista",
     "Anjeer Dryfruit", "Mava Malai", "White House", "Guvava", "Kaju mava Kesar",
@@ -42,18 +42,16 @@ ice_cream_items = [
     "Coco", "Lassi", "Mango Delight", "Fruit Salad"
 ]
 
-# સ્ક્રીન પર બે ભાગમાં આઈટમ વહેંચવા માટે (ફોટા જેવું જ લુક આપવા)
 mid_point = len(ice_cream_items) // 2
 left_list = ice_cream_items[:mid_point+1]
 right_list = ice_cream_items[mid_point+1:]
 
 order_entries = []
-
 col_list1, col_list2 = st.columns(2)
 
-# ડાબી બાજુની આઈસ્ક્રીમ આઈટમ્સ
+# Left Side Items
 with col_list1:
-    st.markdown("#### **લિસ્ટ - ૧**")
+    st.markdown("#### **List - 1**")
     for item in left_list:
         c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
@@ -61,13 +59,13 @@ with col_list1:
         with c2:
             qty = st.number_input("Qty", min_value=0, value=0, step=1, key=f"qty_{item}")
         with c3:
-            price = st.number_input("ભાવ (₹)", min_value=0, value=0, step=5, key=f"price_{item}")
+            price = st.number_input("Rate (₹)", min_value=0, value=0, step=5, key=f"price_{item}")
         if qty > 0:
-            order_entries.append({"Item": item, "Quantity": qty, "Price": price, "Total": qty * price})
+            order_entries.append({"Item Name": item, "Quantity": qty, "Rate": price, "Total Amount": qty * price})
 
-# જમણી બાજુની આઈસ્ક્રીમ આઈટમ્સ
+# Right Side Items
 with col_list2:
-    st.markdown("#### **લિસ્ટ - ૨**")
+    st.markdown("#### **List - 2**")
     for item in right_list:
         c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
@@ -75,14 +73,14 @@ with col_list2:
         with c2:
             qty = st.number_input("Qty", min_value=0, value=0, step=1, key=f"qty_{item}")
         with c3:
-            price = st.number_input("ભાવ (₹)", min_value=0, value=0, step=5, key=f"price_{item}")
+            price = st.number_input("Rate (₹)", min_value=0, value=0, step=5, key=f"price_{item}")
         if qty > 0:
-            order_entries.append({"Item": item, "Quantity": qty, "Price": price, "Total": qty * price})
+            order_entries.append({"Item Name": item, "Quantity": qty, "Rate": price, "Total Amount": qty * price})
 
 st.write("---")
 
-# ફોટા નીચે મુજબની EXTRA ITEM (Box, Drum, Can, Kothi)
-st.write("### 📦 EXTRA ITEM (સામાનની વિગત)")
+# EXTRA ITEM Section
+st.write("### 📦 EXTRA ITEM DETAILS")
 extra_items = ["Box", "Drum", "Can", "Kothi"]
 extra_entries = []
 
@@ -92,37 +90,33 @@ columns_list = [col_ex1, col_ex2, col_ex3, col_ex4]
 for i, ex_item in enumerate(extra_items):
     with columns_list[i]:
         st.markdown(f"**📦 {ex_item}**")
-        given = st.number_input("આપેલ (Given)", min_value=0, value=0, step=1, key=f"given_{ex_item}")
-        returned = st.number_input("પાછું આવેલ (Return)", min_value=0, value=0, step=1, key=f"return_{ex_item}")
+        given = st.number_input("Given", min_value=0, value=0, step=1, key=f"given_{ex_item}")
+        returned = st.number_input("Return", min_value=0, value=0, step=1, key=f"return_{ex_item}")
         if given > 0 or returned > 0:
             extra_entries.append({"Extra Item": ex_item, "Given": given, "Return": returned})
 
 st.write("---")
 
-# બિલની આખરી ગણતરી અને સમરી
-st.write("### 🧾 બિલ સમરી (Final Invoice)")
+# Invoice Summary
+st.write("### 🧾 Final Invoice Summary")
 
 if order_entries:
-    # ટેબલ સ્વરૂપે ઓર્ડર બતાવવો
     df = pd.DataFrame(order_entries)
     st.table(df)
     
-    grand_total = df["Total"].sum()
-    st.markdown(f"## 💰 **કુલ રકમ (Grand Total): ₹ {grand_total}/-**")
+    grand_total = df["Total Amount"].sum()
+    st.markdown(f"## 💰 **Grand Total: ₹ {grand_total}/-**")
     
-    # સહી માટેની જગ્યા
     col_sign1, col_sign2 = st.columns(2)
     with col_sign1:
-        st.write("✍️ **Auth. Sign (માલિકની સહી):** __________________")
+        st.write("✍️ **Auth. Sign:** __________________")
     with col_sign2:
-        st.write("✍️ **Receiver Sign (લેનારની સહી):** __________________")
+        st.write("✍️ **Receiver Sign:** __________________")
         
     st.write(" ")
-    # ચલણ સેવ કરવાનું બટન
-    if st.button("💾 ચલણ સેવ કરો અને પ્રિન્ટ કરો"):
-        st.success(f"ચલણ નંબર {st.session_state.challan_number} સક્સેસફુલી સેવ થઈ ગયું છે!")
-        # સેવ થયા પછી ઓટોમેટિક ચલણ નંબર વધારવા માટે
+    if st.button("💾 Save & Print Challan"):
+        st.success(f"Challan No. {st.session_state.challan_number} saved successfully!")
         st.session_state.challan_number += 1
-        st.info("નવું ચલણ બનાવવા માટે પેજ રીફ્રેશ કરો અથવા નવો ઓર્ડર નાખો.")
+        st.info("Refresh or create a new order to update the view.")
 else:
-    st.warning("⚠️ ચલણ બનાવવા માટે લિસ્ટમાંથી કોઈ પણ આઈસ્ક્રીમની 'Qty' (ક્વોન્ટિટી) અને 'ભાવ' ઉમેરો.")
+    st.warning("⚠️ Please enter 'Qty' and 'Rate' for at least one ice cream to generate a challan.")
