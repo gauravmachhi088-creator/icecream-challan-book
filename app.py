@@ -1,9 +1,129 @@
 import streamlit as st
 import pandas as pd
 from datetime import date
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from io import BytesIO
 
 # Page Setup
 st.set_page_config(page_title="Ice Cream Digital Challan", layout="wide")
+
+# Function to generate PDF Invoice
+def generate_pdf_invoice(challan_no, challan_date, customer_name, delivery_place, order_data, extra_data, grand_total):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#1f4788'),
+        spaceAfter=6,
+        alignment=1  # center
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.black,
+        spaceAfter=4
+    )
+    
+    # Add title
+    story.append(Paragraph("🍦 Ice Cream Digital Challan Book", title_style))
+    story.append(Spacer(1, 0.2*inch))
+    
+    # Add challan details
+    details_data = [
+        ["Challan No:", str(challan_no), "Date:", str(challan_date)],
+        ["Customer Name:", customer_name, "Delivery Place:", delivery_place]
+    ]
+    details_table = Table(details_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
+    details_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.beige),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey)
+    ]))
+    story.append(details_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Add items table
+    if order_data:
+        story.append(Paragraph("Items Ordered:", heading_style))
+        items_table_data = [["Item Name", "Quantity", "Rate (₹)", "Total Amount (₹)"]]
+        for item in order_data:
+            items_table_data.append([
+                item["Item Name"],
+                str(item["Quantity"]),
+                str(item["Rate"]),
+                str(item["Total Amount"])
+            ])
+        items_table = Table(items_table_data, colWidths=[3*inch, 1*inch, 1*inch, 1.5*inch])
+        items_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
+        ]))
+        story.append(items_table)
+        story.append(Spacer(1, 0.2*inch))
+    
+    # Add extra items if any
+    if extra_data:
+        story.append(Paragraph("Extra Items:", heading_style))
+        extra_table_data = [["Item", "Given", "Return"]]
+        for item in extra_data:
+            extra_table_data.append([
+                item["Extra Item"],
+                str(item["Given"]),
+                str(item["Return"])
+            ])
+        extra_table = Table(extra_table_data, colWidths=[2*inch, 1.5*inch, 1.5*inch])
+        extra_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige)
+        ]))
+        story.append(extra_table)
+        story.append(Spacer(1, 0.2*inch))
+    
+    # Add grand total
+    story.append(Paragraph(f"<b>Grand Total: ₹ {grand_total}/-</b>", heading_style))
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Add signature lines
+    sig_data = [["Auth. Sign: ___________", "Receiver Sign: ___________"]]
+    sig_table = Table(sig_data, colWidths=[3.5*inch, 3.5*inch])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10)
+    ]))
+    story.append(sig_table)
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
 st.title("🍦 Ice Cream Digital Challan Book")
 st.write("---")
@@ -114,9 +234,39 @@ if order_entries:
         st.write("✍️ **Receiver Sign:** __________________")
         
     st.write(" ")
-    if st.button("💾 Save & Print Challan"):
-        st.success(f"Challan No. {st.session_state.challan_number} saved successfully!")
-        st.session_state.challan_number += 1
-        st.info("Refresh or create a new order to update the view.")
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("💾 Save & Print Challan"):
+            # Generate PDF
+            pdf_buffer = generate_pdf_invoice(
+                st.session_state.challan_number,
+                challan_date,
+                customer_name,
+                delivery_place,
+                order_entries,
+                extra_entries,
+                grand_total
+            )
+            st.success(f"✅ Challan No. {st.session_state.challan_number} generated successfully!")
+            st.session_state.challan_number += 1
+    
+    with col_btn2:
+        if order_entries:  # Only show download if there are items
+            pdf_buffer = generate_pdf_invoice(
+                st.session_state.challan_number,
+                challan_date,
+                customer_name,
+                delivery_place,
+                order_entries,
+                extra_entries,
+                grand_total
+            )
+            st.download_button(
+                label="📥 Download Invoice (PDF)",
+                data=pdf_buffer,
+                file_name=f"challan_{st.session_state.challan_number}.pdf",
+                mime="application/pdf"
+            )
 else:
     st.warning("⚠️ Please enter 'Qty' and 'Rate' for at least one ice cream to generate a challan.")
